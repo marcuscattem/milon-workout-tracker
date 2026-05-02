@@ -5,26 +5,50 @@ import { SymbolWeight, SymbolViewProps } from "expo-symbols";
 import { ComponentProps } from "react";
 import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 
-type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>;
+type IconMapping = Partial<Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>>;
 type IconSymbolName = keyof typeof MAPPING;
 
-/**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
- */
 const MAPPING = {
+  // Navigation
   "house.fill": "home",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
+  "chevron.left": "chevron-left",
+  // Workout
+  "figure.strengthtraining.traditional": "fitness-center",
+  "dumbbell.fill": "fitness-center",
+  "list.bullet": "list",
+  "chart.line.uptrend.xyaxis": "show-chart",
+  "person.fill": "person",
+  "plus": "add",
+  "plus.circle.fill": "add-circle",
+  "checkmark.circle.fill": "check-circle",
+  "checkmark.circle": "radio-button-unchecked",
+  "timer": "timer",
+  "flame.fill": "local-fire-department",
+  "trophy.fill": "emoji-events",
+  "calendar": "calendar-today",
+  "square.and.arrow.up": "share",
+  "trash.fill": "delete",
+  "pencil": "edit",
+  "magnifyingglass": "search",
+  "xmark": "close",
+  "xmark.circle.fill": "cancel",
+  "ellipsis": "more-horiz",
+  "play.fill": "play-arrow",
+  "pause.fill": "pause",
+  "stop.fill": "stop",
+  "arrow.clockwise": "refresh",
+  "info.circle": "info",
+  "gear": "settings",
+  "star.fill": "star",
+  "bolt.fill": "bolt",
+  "chart.bar.fill": "bar-chart",
+  "muscle.fill": "fitness-center",
+  "book.fill": "menu-book",
 } as IconMapping;
 
-/**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
- */
 export function IconSymbol({
   name,
   size = 24,
