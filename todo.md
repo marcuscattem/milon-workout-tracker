@@ -111,3 +111,15 @@
 - [ ] Notas por exercício e treino
 - [ ] Supersets e drop sets
 - [ ] Exportar dados CSV
+
+## Tela de Detalhes do Exercício (v1.1)
+- [x] Criar componente LineChart com SVG nativo (sem dependências extras)
+- [x] Criar função getExerciseHistory no workoutStore
+- [x] Criar rota app/exercise/[id].tsx com tela de detalhes
+- [x] Gráfico de linha com área preenchida e pontos interativos
+- [x] Seletor de métrica: Peso Máx. / 1RM Est. / Volume
+- [x] Cards de estatísticas (peso máx, melhor 1RM, evolução total)
+- [x] Histórico de sessões com indicador de progresso vs sessão anterior
+- [x] Instruções e músculos secundários na tela de detalhes
+- [x] Navegação da biblioteca de exercícios → detalhes
+- [x] Navegação dos recordes pessoais → detalhes (botão "Ver evolução")

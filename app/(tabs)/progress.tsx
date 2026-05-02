@@ -7,7 +7,7 @@ import {
   FlatList,
   Modal,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -29,6 +29,7 @@ function formatVolume(kg: number): string {
 
 export default function ProgressScreen() {
   const colors = useColors();
+  const router = useRouter();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [prs, setPrs] = useState<PersonalRecord[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'prs' | 'history'>('overview');
@@ -233,9 +234,11 @@ export default function ProgressScreen() {
               prs.map((pr) => {
                 const ex = CLASSIC_EXERCISES.find((e) => e.id === pr.exerciseId);
                 return (
-                  <View
+                  <TouchableOpacity
                     key={pr.exerciseId}
                     style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16 }}
+                    onPress={() => router.push(`/exercise/${pr.exerciseId}` as any)}
+                    activeOpacity={0.75}
                   >
                     <View className="flex-row items-center gap-3 mb-3">
                       <View style={{ backgroundColor: '#F59E0B20', borderRadius: 10, padding: 8 }}>
@@ -260,7 +263,11 @@ export default function ProgressScreen() {
                         <Text className="text-muted text-xs mt-0.5">Vol. Máx.</Text>
                       </View>
                     </View>
-                  </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 10, gap: 4 }}>
+                      <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>Ver evolução</Text>
+                      <IconSymbol name="chevron.right" size={12} color={colors.primary} />
+                    </View>
+                  </TouchableOpacity>
                 );
               })
             )}

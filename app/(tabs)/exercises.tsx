@@ -48,8 +48,6 @@ export default function ExercisesScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | 'all'>('all');
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-
   const filtered = useMemo(() => {
     return CLASSIC_EXERCISES.filter((e) => {
       const matchesMuscle = selectedMuscle === 'all' || e.muscleGroup === selectedMuscle;
@@ -75,7 +73,7 @@ export default function ExercisesScreen() {
           alignItems: 'center',
           gap: 12,
         }}
-        onPress={() => setSelectedExercise(item)}
+        onPress={() => router.push(`/exercise/${item.id}` as any)}
       >
         <View
           style={{
@@ -206,83 +204,6 @@ export default function ExercisesScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
       />
 
-      {/* Exercise Detail Modal */}
-      {selectedExercise && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: colors.card,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: 24,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
-            elevation: 10,
-          }}
-        >
-          <View className="flex-row items-start justify-between mb-4">
-            <View className="flex-1">
-              <Text className="text-foreground text-xl font-bold">{selectedExercise.name}</Text>
-              <View className="flex-row gap-2 mt-2">
-                <View
-                  style={{
-                    backgroundColor: (MUSCLE_COLORS[selectedExercise.muscleGroup] || colors.primary) + '20',
-                    borderRadius: 8,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                  }}
-                >
-                  <Text style={{ color: MUSCLE_COLORS[selectedExercise.muscleGroup] || colors.primary, fontSize: 12, fontWeight: '700' }}>
-                    {MUSCLE_GROUP_LABELS[selectedExercise.muscleGroup]}
-                  </Text>
-                </View>
-                <View
-                  style={{ backgroundColor: colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}
-                >
-                  <Text className="text-muted" style={{ fontSize: 12 }}>
-                    {EQUIPMENT_LABELS[selectedExercise.equipment]}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={{ backgroundColor: colors.surface, borderRadius: 10, padding: 8 }}
-              onPress={() => setSelectedExercise(null)}
-            >
-              <IconSymbol name="xmark" size={18} color={colors.foreground} />
-            </TouchableOpacity>
-          </View>
-
-          {selectedExercise.instructions && (
-            <View
-              style={{ backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 16 }}
-            >
-              <Text className="text-muted text-xs font-semibold mb-2">INSTRUÇÕES</Text>
-              <Text className="text-foreground text-sm leading-relaxed">{selectedExercise.instructions}</Text>
-            </View>
-          )}
-
-          {selectedExercise.secondaryMuscles && selectedExercise.secondaryMuscles.length > 0 && (
-            <View className="mb-4">
-              <Text className="text-muted text-xs font-semibold mb-2">MÚSCULOS SECUNDÁRIOS</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {selectedExercise.secondaryMuscles.map((m) => (
-                  <View key={m} style={{ backgroundColor: colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-                    <Text className="text-muted" style={{ fontSize: 12 }}>{MUSCLE_GROUP_LABELS[m]}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-      )}
     </ScreenContainer>
   );
 }

@@ -233,3 +233,45 @@ export async function getWorkoutStats(): Promise<{
     thisWeekWorkouts,
   };
 }
+
+// ===== EXERCISE HISTORY =====
+export interface ExerciseHistoryPoint {
+  date: string;       // ISO string
+  maxWeight: number;
+  maxReps: number;
+  totalVolume: number;
+  estimated1RM: number;
+  workoutId: string;
+  workoutName: string;
+}
+
+export async function getExerciseHistory(exerciseId: string): Promise<ExerciseHistoryPoint[]> {
+  const workouts = await getWorkouts();
+  const points: ExerciseHistoryPoint[] = [];
+
+  for (const workout of workouts) {
+    const we = workout.exercises.find((e) => e.exerciseId === exerciseId);
+    if (!we) continue;
+
+    const completedSets = we.sets.filter((s) => s.completed && s.weight > 0 && s.reps > 0);
+    if (completedSets.length === 0) continue;
+
+    const maxWeight = Math.max(...completedSets.map((s) => s.weight));
+    const maxReps = Math.max(...completedSets.map((s) => s.reps));
+    const totalVolume = completedSets.reduce((t, s) => t + s.weight * s.reps, 0);
+    const estimated1RM = Math.max(...completedSets.map((s) => calculate1RM(s.weight, s.reps)));
+
+    points.push({
+      date: workout.date,
+      maxWeight,
+      maxReps,
+      totalVolume,
+      estimated1RM,
+      workoutId: workout.id,
+      workoutName: workout.name,
+    });
+  }
+
+  // Sort ascending by date
+  return points.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}
