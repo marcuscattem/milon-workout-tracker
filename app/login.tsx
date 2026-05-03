@@ -46,7 +46,12 @@ export default function LoginScreen() {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
-        router.replace('/(tabs)' as any);
+        // Se for o Marcus, vai direto para os treinos dele
+        if (username.trim().toLowerCase() === 'marcuscattem') {
+          router.replace('/marcus' as any);
+        } else {
+          router.replace('/(tabs)' as any);
+        }
       } else {
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

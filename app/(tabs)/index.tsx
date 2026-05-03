@@ -154,6 +154,34 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Login Banner — shown when NOT logged in */}
+        {!session && (
+          <View className="px-5 mt-5">
+            <TouchableOpacity
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: 1.5,
+                borderColor: colors.primary + '40',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+              }}
+              onPress={() => router.push('/login' as any)}
+            >
+              <View style={{ backgroundColor: colors.primary + '20', borderRadius: 12, padding: 10 }}>
+                <Text style={{ fontSize: 22 }}>🔐</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: '700' }}>Acessar Meus Treinos</Text>
+                <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>Faça login para ver seu programa personalizado</Text>
+              </View>
+              <Text style={{ color: colors.primary, fontSize: 18 }}>›</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Marcus Treinos Card — shown when logged in as marcuscattem */}
         {session?.username === 'marcuscattem' && (
           <View className="px-5 mt-5">
