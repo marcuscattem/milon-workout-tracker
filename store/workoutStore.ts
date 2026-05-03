@@ -275,3 +275,79 @@ export async function getExerciseHistory(exerciseId: string): Promise<ExerciseHi
   // Sort ascending by date
   return points.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
+
+// ===== PREVIOUS PERFORMANCE PER EXERCISE (for Marcus workout active screen) =====
+export interface PreviousExercisePerformance {
+  sets: { weight: number; reps: number }[];
+  date: string;
+  workoutName: string;
+}
+
+/**
+ * Returns the most recent completed sets for a given exerciseId.
+ * Used to show "last time" reference during active workout.
+ */
+export async function getPreviousPerformanceForExercise(
+  exerciseId: string
+): Promise<PreviousExercisePerformance | null> {
+  const workouts = await getWorkouts();
+  // workouts are stored newest-first
+  for (const workout of workouts) {
+    const we = workout.exercises.find((e) => e.exerciseId === exerciseId);
+    if (!we) continue;
+    const completedSets = we.sets.filter((s) => s.completed && s.reps > 0);
+    if (completedSets.length === 0) continue;
+    return {
+      sets: completedSets.map((s) => ({ weight: s.weight, reps: s.reps })),
+      date: workout.date,
+      workoutName: workout.name,
+    };
+  }
+  return null;
+}
+
+/**
+ * Converts Marcus workout data (setsData map) into a Workout object and saves it.
+ * exerciseSlots: the display list of ExerciseSlots that were shown during the workout.
+ * setsData: Record<exerciseId, { weight: string; reps: string; done: boolean }[]>
+ */
+export async function saveMarcusWorkout(params: {
+  routineId: string;
+  routineName: string;
+  duration: number;
+  exerciseSlots: { id: string; name: string; sets: number }[];
+  setsData: Record<string, { weight: string; reps: string; done: boolean }[]>;
+}): Promise<Workout> {
+  const { routineId, routineName, duration, exerciseSlots, setsData } = params;
+
+  const exercises: WorkoutExercise[] = exerciseSlots.map((slot, order) => {
+    const rawSets = setsData[slot.id] ?? [];
+    const workoutSets: WorkoutSet[] = rawSets.map((s, i) => ({
+      id: `${slot.id}_s${i}_${Date.now()}`,
+      exerciseId: slot.id,
+      setNumber: i + 1,
+      weight: parseFloat(s.weight) || 0,
+      reps: parseInt(s.reps, 10) || 0,
+      setType: 'normal' as const,
+      completed: s.done,
+    }));
+    return {
+      id: `we_${slot.id}_${Date.now()}`,
+      exerciseId: slot.id,
+      sets: workoutSets,
+      order,
+    };
+  });
+
+  const workout: Workout = {
+    id: `marcus_${routineId}_${Date.now()}`,
+    name: routineName,
+    date: new Date().toISOString(),
+    duration,
+    exercises,
+    routineId,
+  };
+
+  await saveWorkout(workout);
+  return workout;
+}

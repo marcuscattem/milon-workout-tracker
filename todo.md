@@ -154,3 +154,12 @@
 - [x] Cronômetro de duração do treino
 - [x] Resumo ao finalizar treino
 - [x] 17 testes automatizados para auth e lógica de alternância
+
+## Integração Treino Ativo Marcus → workoutStore (v1.4)
+- [x] Adaptar workoutStore para aceitar treinos Marcus como Workout
+- [x] Carregar histórico de peso anterior por exercício na tela de treino ativo
+- [x] Salvar treino ao finalizar (peso, reps, RPE por série)
+- [x] Atualizar PRs automaticamente ao salvar treino Marcus
+- [x] Exibir dados do treino anterior inline por série
+- [x] Integrar gráficos de evolução com dados dos treinos Marcus
+- [x] Testes automatizados para o fluxo de salvamento
