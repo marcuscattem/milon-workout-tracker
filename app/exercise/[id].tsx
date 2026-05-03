@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Text,
   View,
@@ -6,15 +6,21 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   ActivityIndicator,
+  Platform,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
+import ViewShot, { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as Haptics from 'expo-haptics';
 
 import { ScreenContainer } from '@/components/screen-container';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { LineChart, LineChartPoint } from '@/components/LineChart';
+import { ShareProgressCard } from '@/components/ShareProgressCard';
 import { useColors } from '@/hooks/use-colors';
-import { getExerciseHistory, ExerciseHistoryPoint, calculate1RM } from '@/store/workoutStore';
+import { getExerciseHistory, ExerciseHistoryPoint } from '@/store/workoutStore';
 import { CLASSIC_EXERCISES } from '@/data/exercises';
 import { MUSCLE_GROUP_LABELS, EQUIPMENT_LABELS } from '@/types';
 
@@ -56,6 +62,9 @@ function formatValue(val: number, unit: string): string {
   return `${Math.round(val * 10) / 10}${unit}`;
 }
 
+// Card size: 360px square for a crisp 1:1 share image
+const SHARE_CARD_SIZE = 360;
+
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -65,13 +74,19 @@ export default function ExerciseDetailScreen() {
   const [history, setHistory] = useState<ExerciseHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeMetric, setActiveMetric] = useState<MetricKey>('maxWeight');
+  const [sharing, setSharing] = useState(false);
+
+  // Ref to the hidden share card for capture
+  const shareCardRef = useRef<View>(null);
 
   const exercise = useMemo(
     () => CLASSIC_EXERCISES.find((e) => e.id === id),
     [id]
   );
 
-  const muscleColor = exercise ? (MUSCLE_COLORS[exercise.muscleGroup] || colors.primary) : colors.primary;
+  const muscleColor = exercise
+    ? (MUSCLE_COLORS[exercise.muscleGroup] || colors.primary)
+    : colors.primary;
 
   useFocusEffect(
     useCallback(() => {
@@ -84,7 +99,7 @@ export default function ExerciseDetailScreen() {
     }, [id])
   );
 
-  // Build chart data for selected metric
+  // Chart data for the visible interactive chart
   const chartData: LineChartPoint[] = useMemo(() => {
     return history.map((h) => ({
       label: formatDate(h.date),
@@ -97,7 +112,6 @@ export default function ExerciseDetailScreen() {
     if (history.length === 0) return null;
     const weights = history.map((h) => h.maxWeight);
     const rms = history.map((h) => h.estimated1RM);
-    const volumes = history.map((h) => h.totalVolume);
     const latest = history[history.length - 1];
     const first = history[0];
     const weightProgress = latest.maxWeight - first.maxWeight;
@@ -112,7 +126,54 @@ export default function ExerciseDetailScreen() {
   }, [history]);
 
   const activeMetricInfo = METRICS.find((m) => m.key === activeMetric)!;
-  const chartWidth = width - 32; // 16px padding each side
+  const chartWidth = width - 32;
+
+  // ─── Share handler ────────────────────────────────────────────────────────
+  const handleShare = useCallback(async () => {
+    if (!shareCardRef.current || history.length === 0) return;
+
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    setSharing(true);
+    try {
+      // 1. Capture the hidden share card as a PNG
+      const uri = await captureRef(shareCardRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+      });
+
+      // 2. Check sharing availability
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        Alert.alert(
+          'Compartilhamento indisponível',
+          'Seu dispositivo não suporta compartilhamento de imagens neste momento.'
+        );
+        return;
+      }
+
+      // 3. Open the native share sheet
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: `Minha evolução — ${exercise?.name}`,
+        UTI: 'public.png',
+      });
+
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (err: any) {
+      // User cancelled share — not an error worth alerting
+      if (!String(err).includes('cancel') && !String(err).includes('Cancel')) {
+        Alert.alert('Erro', 'Não foi possível compartilhar a imagem. Tente novamente.');
+      }
+    } finally {
+      setSharing(false);
+    }
+  }, [history, exercise]);
 
   if (!exercise) {
     return (
@@ -126,7 +187,33 @@ export default function ExerciseDetailScreen() {
 
   return (
     <ScreenContainer>
-      {/* Header */}
+      {/* ── Hidden share card (off-screen, captured by ViewShot) ── */}
+      {stats && (
+        <View
+          style={{
+            position: 'absolute',
+            top: -9999,
+            left: -9999,
+            opacity: 0,
+          }}
+          pointerEvents="none"
+        >
+          <ShareProgressCard
+            ref={shareCardRef}
+            exerciseName={exercise.name}
+            muscleLabel={MUSCLE_GROUP_LABELS[exercise.muscleGroup]}
+            muscleColor={muscleColor}
+            chartData={chartData}
+            metricLabel={activeMetricInfo.label}
+            metricUnit={activeMetricInfo.unit}
+            stats={stats}
+            history={history}
+            cardWidth={SHARE_CARD_SIZE}
+          />
+        </View>
+      )}
+
+      {/* ── Header ── */}
       <View
         style={{
           flexDirection: 'row',
@@ -149,6 +236,7 @@ export default function ExerciseDetailScreen() {
         >
           <IconSymbol name="chevron.left" size={20} color={colors.foreground} />
         </TouchableOpacity>
+
         <View className="flex-1">
           <Text
             className="text-foreground font-bold"
@@ -184,13 +272,41 @@ export default function ExerciseDetailScreen() {
             </View>
           </View>
         </View>
+
+        {/* Share button — only shown when there's data */}
+        {history.length > 0 && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: sharing ? colors.border : muscleColor,
+              borderRadius: 12,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              opacity: sharing ? 0.7 : 1,
+            }}
+            onPress={handleShare}
+            disabled={sharing}
+            activeOpacity={0.8}
+          >
+            {sharing ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <IconSymbol name="paperplane.fill" size={16} color="#fff" />
+            )}
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>
+              {sharing ? 'Gerando...' : 'Compartilhar'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
       >
-        {/* Stats Cards */}
+        {/* ── Stats Cards ── */}
         {stats && (
           <View
             style={{
@@ -247,11 +363,15 @@ export default function ExerciseDetailScreen() {
                 alignItems: 'center',
               }}
             >
-              <View className="flex-row items-center gap-1">
-                <Text style={{ color: stats.weightProgress >= 0 ? colors.success : colors.error, fontSize: 20, fontWeight: '800' }}>
-                  {stats.weightProgress >= 0 ? '+' : ''}{stats.weightProgress}kg
-                </Text>
-              </View>
+              <Text
+                style={{
+                  color: stats.weightProgress >= 0 ? colors.success : colors.error,
+                  fontSize: 20,
+                  fontWeight: '800',
+                }}
+              >
+                {stats.weightProgress >= 0 ? '+' : ''}{stats.weightProgress}kg
+              </Text>
               <Text className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>
                 Evolução
               </Text>
@@ -259,7 +379,7 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
-        {/* Chart Card */}
+        {/* ── Chart Card ── */}
         <View
           style={{
             marginHorizontal: 16,
@@ -271,8 +391,8 @@ export default function ExerciseDetailScreen() {
             marginBottom: 20,
           }}
         >
-          {/* Chart Title + Metric Selector */}
-          <View className="flex-row items-center justify-between mb-12">
+          {/* Chart Title */}
+          <View className="flex-row items-center justify-between mb-3">
             <View>
               <Text className="text-foreground font-bold" style={{ fontSize: 15 }}>
                 Evolução ao Longo do Tempo
@@ -354,7 +474,7 @@ export default function ExerciseDetailScreen() {
               }}
             >
               <IconSymbol name={activeMetricInfo.icon} size={18} color={muscleColor} />
-              <View>
+              <View className="flex-1">
                 <Text style={{ color: muscleColor, fontWeight: '800', fontSize: 16 }}>
                   {formatValue(history[history.length - 1][activeMetric], activeMetricInfo.unit)}
                 </Text>
@@ -362,11 +482,30 @@ export default function ExerciseDetailScreen() {
                   Último registro — {formatLongDate(history[history.length - 1].date)}
                 </Text>
               </View>
+              {/* Inline share hint */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: muscleColor + '20',
+                  borderRadius: 8,
+                  padding: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+                onPress={handleShare}
+                disabled={sharing}
+                activeOpacity={0.75}
+              >
+                <IconSymbol name="paperplane.fill" size={14} color={muscleColor} />
+                <Text style={{ color: muscleColor, fontSize: 11, fontWeight: '700' }}>
+                  Exportar
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* Session History */}
+        {/* ── Session History ── */}
         <View style={{ paddingHorizontal: 16 }}>
           <Text className="text-foreground font-bold" style={{ fontSize: 15, marginBottom: 12 }}>
             Histórico de Sessões
@@ -453,7 +592,7 @@ export default function ExerciseDetailScreen() {
                   </View>
                 </View>
 
-                {/* Progress indicator vs previous */}
+                {/* Progress vs previous */}
                 {i < history.length - 1 && (() => {
                   const prev = [...history].reverse()[i + 1];
                   const diff = h.maxWeight - prev.maxWeight;
@@ -484,7 +623,7 @@ export default function ExerciseDetailScreen() {
           )}
         </View>
 
-        {/* Instructions */}
+        {/* ── Instructions ── */}
         {exercise.instructions && (
           <View
             style={{
@@ -506,7 +645,7 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
-        {/* Secondary muscles */}
+        {/* ── Secondary muscles ── */}
         {exercise.secondaryMuscles && exercise.secondaryMuscles.length > 0 && (
           <View
             style={{

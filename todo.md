@@ -123,3 +123,14 @@
 - [x] Instruções e músculos secundários na tela de detalhes
 - [x] Navegação da biblioteca de exercícios → detalhes
 - [x] Navegação dos recordes pessoais → detalhes (botão "Ver evolução")
+
+## Exportação e Compartilhamento (v1.2)
+- [x] Instalar react-native-view-shot e expo-sharing
+- [x] Criar componente ShareProgressCard (card 1:1 com fundo escuro para redes sociais)
+- [x] Gráfico SVG inline no card de compartilhamento
+- [x] Botão "Compartilhar" no header da tela de detalhes
+- [x] Botão "Exportar" inline no callout do último valor
+- [x] Captura do card via captureRef (off-screen, sem flash visual)
+- [x] Abertura do share sheet nativo com mimeType image/png
+- [x] Haptic feedback ao iniciar e ao concluir compartilhamento
+- [x] Tratamento de erros e cancelamento do usuário
