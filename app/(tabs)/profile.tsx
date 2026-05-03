@@ -16,10 +16,21 @@ import { useColors } from "@/hooks/use-colors";
 import { getUserProfile, saveUserProfile, getWorkouts, getWorkoutStats } from "@/store/workoutStore";
 import { UserProfile } from "@/types";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAuth } from "@/store/AuthContext";
+import { useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const colors = useColors();
   const colorScheme = useColorScheme();
+  const { session, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert('Sair da conta', `Deseja sair de @${session?.username}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sair', style: 'destructive', onPress: async () => { await logout(); } },
+    ]);
+  };
   const [profile, setProfile] = useState<UserProfile>({ name: 'Atleta', unit: 'kg', theme: 'system' });
   const [stats, setStats] = useState({ totalWorkouts: 0, totalVolume: 0, currentStreak: 0, thisWeekWorkouts: 0 });
   const [editing, setEditing] = useState(false);
@@ -57,9 +68,45 @@ export default function ProfileScreen() {
     <ScreenContainer>
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
         {/* Header */}
-        <View className="px-5 pt-4 pb-3">
+        <View className="px-5 pt-4 pb-3 flex-row items-center justify-between">
           <Text className="text-foreground text-2xl font-bold">Perfil</Text>
+          {session ? (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.error + '20', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.error + '40' }}
+              onPress={handleLogout}
+            >
+              <Text style={{ color: colors.error, fontSize: 13, fontWeight: '600' }}>Sair</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary + '20', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: colors.primary + '40' }}
+              onPress={() => router.push('/login' as any)}
+            >
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Entrar</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Session info */}
+        {session && (
+          <View className="px-5 mb-3">
+            <View style={{ backgroundColor: colors.primary + '15', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.primary + '30', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 16 }}>{session.displayName.charAt(0)}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.foreground, fontWeight: '700', fontSize: 15 }}>{session.displayName}</Text>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>@{session.username}</Text>
+              </View>
+              <TouchableOpacity
+                style={{ backgroundColor: '#F97316', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}
+                onPress={() => router.push('/marcus' as any)}
+              >
+                <Text style={{ color: '#FFF', fontSize: 12, fontWeight: '700' }}>Meus Treinos</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Avatar + Name */}
         <View className="px-5 mb-5">

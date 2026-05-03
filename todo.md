@@ -134,3 +134,23 @@
 - [x] Abertura do share sheet nativo com mimeType image/png
 - [x] Haptic feedback ao iniciar e ao concluir compartilhamento
 - [x] Tratamento de erros e cancelamento do usuário
+
+## Login e Treinos Personalizados — Marcus Cattem (v1.3)
+- [x] Sistema de autenticação local com login/senha (AsyncStorage)
+- [x] Usuário pré-cadastrado: marcuscattem / 12011994
+- [x] Tela de login com design limpo e validação
+- [x] AuthProvider global integrado no _layout.tsx
+- [x] Botão de login/logout na tela de Perfil
+- [x] Card "Meus Treinos" na Home (visível apenas para marcuscattem)
+- [x] 9 rotinas importadas do PDF: Treinos A-G + Pliometria + Argolas
+- [x] Exercícios com faixas de repetição por série (8-12 / 6-8 / 4-6)
+- [x] Técnicas prescritas: Cluster-Set, Isometria, Rest-Pause, Repetições Parciais
+- [x] Exercícios alternativos (cinza) vinculados aos principais
+- [x] Bi-set groups identificados e exibidos
+- [x] Tela de listagem dos treinos (/marcus/index)
+- [x] Tela de detalhes do treino (/marcus/[id]) com botão 🔄 alternar
+- [x] Tela de treino ativo (/marcus/workout/[id]) com alternância durante o treino
+- [x] Timer de descanso automático (90s) ao completar série
+- [x] Cronômetro de duração do treino
+- [x] Resumo ao finalizar treino
+- [x] 17 testes automatizados para auth e lógica de alternância

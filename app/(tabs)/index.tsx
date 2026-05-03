@@ -17,6 +17,8 @@ import { getRoutines } from "@/store/workoutStore";
 import { Workout, Routine } from "@/types";
 import { CLASSIC_EXERCISES } from "@/data/exercises";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/store/AuthContext";
+import { MARCUS_ROUTINES } from "@/data/marcus_routines";
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -52,6 +54,14 @@ export default function HomeScreen() {
   const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const { session } = useAuth();
+
+  // Today's Marcus routine
+  const todayMarcusRoutine = (() => {
+    const day = new Date().getDay();
+    const map: Record<number, string> = { 1: 'marcus_A', 2: 'marcus_B', 3: 'marcus_C', 4: 'marcus_D', 5: 'marcus_E', 6: 'marcus_F', 0: 'marcus_G' };
+    return MARCUS_ROUTINES.find(r => r.id === map[day]) ?? null;
+  })();
 
   const loadData = useCallback(async () => {
     const [s, workouts, rts] = await Promise.all([
@@ -143,6 +153,43 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
+
+        {/* Marcus Treinos Card — shown when logged in as marcuscattem */}
+        {session?.username === 'marcuscattem' && (
+          <View className="px-5 mt-5">
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#F97316',
+                borderRadius: 16,
+                padding: 16,
+              }}
+              onPress={() => router.push('/marcus' as any)}
+            >
+              <View className="flex-row items-center justify-between">
+                <View>
+                  <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '600', opacity: 0.8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Corpo.Ciência</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '800', marginTop: 2 }}>Meus Treinos</Text>
+                  {todayMarcusRoutine && (
+                    <Text style={{ color: '#FFFFFF', fontSize: 13, opacity: 0.85, marginTop: 2 }}>
+                      Hoje: {todayMarcusRoutine.name} • {todayMarcusRoutine.exercises.filter(e => !e.isAlternative).length} exercícios
+                    </Text>
+                  )}
+                </View>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, padding: 10 }}>
+                  <Text style={{ fontSize: 24 }}>💪</Text>
+                </View>
+              </View>
+              {todayMarcusRoutine && (
+                <TouchableOpacity
+                  style={{ backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center', marginTop: 12 }}
+                  onPress={() => router.push({ pathname: '/marcus/workout/[id]' as any, params: { id: todayMarcusRoutine.id } })}
+                >
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>▶  Iniciar {todayMarcusRoutine.name} Agora</Text>
+                </TouchableOpacity>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Start Workout Button */}
         <View className="px-5 mt-5">
